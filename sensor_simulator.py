@@ -1,0 +1,54 @@
+import random
+import time
+import csv
+from datetime import datetime
+
+temperature = 24.0
+humidity = 45.0
+
+target_temperature = 24.0
+target_humidity = 45.0
+
+with open("sensor_data.csv", "a", newline="") as file:
+    writer = csv.writer(file)
+
+    # CSV dosyası boşsa başlıkları ekle
+    if file.tell() == 0:
+        writer.writerow(["timestamp", "temperature", "humidity"])
+
+    while True:
+
+        # Hedef değerleri küçük miktarlarda değiştir
+        target_temperature += random.uniform(-0.1, 0.1)
+        target_humidity += random.uniform(-0.3, 0.3)
+
+        # Hedeflerin gerçekçi sınırlar içinde kalmasını sağla
+        target_temperature = max(18, min(30, target_temperature))
+        target_humidity = max(30, min(70, target_humidity))
+
+        # Ölçümü hedefe doğru küçük bir adımla yaklaştır
+        temperature += (target_temperature - temperature) * 0.1
+        humidity += (target_humidity - humidity) * 0.1
+
+        # Ölçüm zamanını al
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Terminale yazdır
+        print(
+            timestamp,
+            "| Temperature:", round(temperature, 2), "°C",
+            "| Humidity:", round(humidity, 2), "%"
+        )
+
+        # CSV dosyasına kaydet
+        writer.writerow([
+            timestamp,
+            round(temperature, 2),
+            round(humidity, 2)
+        ])
+
+        # Dosyaya hemen yaz
+        file.flush()
+
+        # 2 saniye bekle
+        time.sleep(2)
