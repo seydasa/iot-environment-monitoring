@@ -2,6 +2,17 @@ import random
 import time
 import csv
 from datetime import datetime
+import paho.mqtt.client as mqtt
+
+# MQTT ayarları
+BROKER = "localhost"
+PORT = 1883
+TOPIC = "iot/sensors"
+
+# MQTT bağlantısı
+client = mqtt.Client()
+client.connect(BROKER, PORT, 60)
+client.loop_start()
 
 temperature = 24.0
 humidity = 45.0
@@ -33,22 +44,36 @@ with open("sensor_data.csv", "a", newline="") as file:
         # Ölçüm zamanını al
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        # Değerleri yuvarla
+        temperature_value = round(temperature, 2)
+        humidity_value = round(humidity, 2)
+
         # Terminale yazdır
         print(
             timestamp,
-            "| Temperature:", round(temperature, 2), "°C",
-            "| Humidity:", round(humidity, 2), "%"
+            "| Temperature:", temperature_value, "°C",
+            "| Humidity:", humidity_value, "%"
         )
 
         # CSV dosyasına kaydet
         writer.writerow([
             timestamp,
-            round(temperature, 2),
-            round(humidity, 2)
+            temperature_value,
+            humidity_value
         ])
 
         # Dosyaya hemen yaz
         file.flush()
+
+        # MQTT mesajı oluştur
+        message = (
+            f'{{"timestamp": "{timestamp}", '
+            f'"temperature": {temperature_value}, '
+            f'"humidity": {humidity_value}}}'
+        )
+
+        # MQTT üzerinden gönder
+        client.publish(TOPIC, message)
 
         # 2 saniye bekle
         time.sleep(2)
